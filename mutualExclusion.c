@@ -16,70 +16,133 @@
  *   3. Save, rebuild, rerun, and note the difference in results.
  */
 
-#include <stdio.h>        // printf()
-#include <stdlib.h>       // atoi(), exit(), ...
-#include <pthread.h>      // pthread types and functions
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <time.h>
+#include "bankAccount.h"
 
-#include "bankAccount.h"  // bank account info
+#define NUM_TRANSACTIONS 1000
 
-// utility function to identify even-odd numbers
-unsigned odd(unsigned long num) { return num % 2; }
+// Tipos de operação
+#define OP_DEPOSIT   0
+#define OP_WITHDRAW  1
+#define OP_CHECK     2
+#define OP_TRANSFER  3
 
-// simulate id performing 1000 transactions 
-void do1000Transactions(unsigned long id) {
-   for (unsigned i = 0; i < 1000; i++) {
-      if ( odd( id ) ) {  
-         deposit(100.00);   // odd threads deposit
-      } else {
-         withdraw(100.00);  // even threads withdraw
-      }
-   }
+/*
+ * Função executada por cada thread.
+ * Para cada iteração, a operação é escolhida aleatoriamente,
+ * assim como a conta envolvida (ou contas, no caso de transferência).
+ *
+ * As operações realizadas chamam diretamente as funções do módulo
+ * bankAccount.c, que já implementam o acesso seguro aos recursos compartilhados.
+ */
+void* threadFunction(void* arg) {
+    unsigned long threadID = (unsigned long) arg;
+
+    for (int i = 0; i < NUM_TRANSACTIONS; i++) {
+        int op = rand() % 4;
+        int accountID, fromID, toID;
+        double amount;
+
+        switch (op) {
+
+            case OP_DEPOSIT:
+                accountID = rand() % NUM_ACCOUNTS;
+                amount = (rand() % 500) + 1;
+                deposit(accountID, amount);
+                break;
+
+            case OP_WITHDRAW:
+                accountID = rand() % NUM_ACCOUNTS;
+                amount = (rand() % 500) + 1;
+                withdraw(accountID, amount);
+                break;
+
+            case OP_CHECK:
+                accountID = rand() % NUM_ACCOUNTS;
+                checkBalance(accountID);
+                break;
+
+            case OP_TRANSFER:
+                fromID = rand() % NUM_ACCOUNTS;
+                toID   = rand() % NUM_ACCOUNTS;
+
+                // A transferência exige que as contas sejam distintas
+                while (toID == fromID) {
+                    toID = rand() % NUM_ACCOUNTS;
+                }
+
+                amount = (rand() % 500) + 1;
+                transfer(fromID, toID, amount);
+                break;
+        }
+    }
+
+    return NULL;
 }
 
-void* child(void * buf) { 
-   unsigned long childID = (unsigned long) buf;
-   do1000Transactions(childID);  
-   return NULL;
-}
-
+/*
+ * Interpreta o argumento passado pela linha de comando.
+ * Caso o usuário não informe quantidade de threads,
+ * utiliza o valor padrão 4.
+ */
 unsigned long processCommandLine(int argc, char** argv) {
-   if (argc == 2) {
-      return strtoul(argv[1], 0, 10);
-   } else if (argc == 1) {
-      return 1;
-   } else {
-      fprintf(stderr, "\nUsage: ./mutualExclusion [evenNumberOfThreads]\n");
-      exit(1);
-   }
+    if (argc == 2) {
+        return strtoul(argv[1], NULL, 10);
+    } else if (argc == 1) {
+        return 4;
+    } else {
+        fprintf(stderr, "Uso: %s [numThreads]\n", argv[0]);
+        exit(1);
+    }
 }
 
+/*
+ * Função principal:
+ *  - Inicializa gerador de números aleatórios
+ *  - Cria as threads
+ *  - Aguarda finalização de todas
+ *  - Exibe saldo final das contas
+ *  - Libera recursos
+ */
 int main(int argc, char** argv) {
-  pthread_t * children;                   // dynamic array of child threads
-  unsigned long id = 0;                   // loop control variable
-  unsigned long numThreads = 0;           // desired # of threads
-                                          // get desired # of threads
-  numThreads = processCommandLine(argc, argv);
-                                          // allocate array of handles
-  children = malloc( numThreads * sizeof(pthread_t) );
-                                          // FORK:
-  for (id = 1; id < numThreads; id++) {
-     pthread_create( &(children[id-1]),   // our handle for the child 
-                      NULL,               // attributes of the child
-                      child,              // the function it should run
-                      (void*) id );       // args to that function
-  }
-  
-  do1000Transactions(0);
+    unsigned long numThreads = processCommandLine(argc, argv);
 
-  for (id = 1; id < numThreads; id++) {   // JOIN:
-     pthread_join( children[id-1], NULL );
-  }
+    pthread_t* threads = malloc(numThreads * sizeof(pthread_t));
+    if (!threads) {
+        perror("Erro ao alocar memória para threads");
+        exit(1);
+    }
 
-  printf("\nThe final balance of the account using %lu threads is $%.2f.\n\n",
-          numThreads, bankAccountBalance);
-  
-  free(children);                         // deallocate array
-  cleanup();                              // deallocate mutex
-  return 0;
+    srand(time(NULL));
+
+    // Criação das threads
+    for (unsigned long i = 0; i < numThreads; i++) {
+        if (pthread_create(&threads[i], NULL, threadFunction, (void*) i) != 0) {
+            perror("Erro ao criar thread");
+            free(threads);
+            exit(1);
+        }
+    }
+
+    // Espera por todas as threads
+    for (unsigned long i = 0; i < numThreads; i++) {
+        pthread_join(threads[i], NULL);
+    }
+
+    /*
+     * Impressão do saldo final de cada conta.
+     * A consulta via checkBalance utiliza mutex,
+     * garantindo leitura consistente mesmo após múltiplas operações concorrentes.
+     */
+    printf("\nSaldos finais das contas:\n");
+    for (int i = 0; i < NUM_ACCOUNTS; i++) {
+        printf("Conta %d: %.2f\n", i, checkBalance(i));
+    }
+
+    free(threads);
+    cleanup();
+    return 0;
 }
-

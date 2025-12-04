@@ -2,9 +2,6 @@
  *
  * Joel Adams, Calvin College, Fall 2013.
  */
-
-
-
 #include <pthread.h>
 #include <stdio.h>
 

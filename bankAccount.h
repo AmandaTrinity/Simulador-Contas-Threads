@@ -26,11 +26,25 @@ void deposit(int accountID, double amount) {
    }
 }
 
-// subtract amount from bankAccountBalance
-void withdraw(double amount) {
-  // pthread_mutex_lock( &lock );
-   bankAccountBalance -= amount;
-  // pthread_mutex_unlock( &lock );
+//Subtrai um valor do saldo de uma conta específica
+//Retorna 1 em sucesso, 0 em falha (saldo insuficiente), -1 para conta inválida
+int withdraw(int accountID, double amount) {
+   int success = 0; //assume falha por padrão
+
+   if(accountID >= 0 && accountID < NUM_ACCOUNTS) {
+      pthread_mutex_lock(&locks[accountID]);
+ 
+      if(bankAccountBalances[accountID] >= amount){
+         bankAccountBalances[accountID] -= amount;
+         success = 1;
+      
+      }
+      pthread_mutex_unlock(&locks[accountID]);
+   } else {
+      success = -1; //Conta Inválida
+   }
+
+   return success;
 }
 
 void cleanup() {

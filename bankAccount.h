@@ -29,3 +29,6 @@ double checkBalance(int accountID);
 
 //Destruir o mutex(cadeado) para liberar os recursos do sistema
 void cleanup();
+
+// (mirella) Transfere um valor de uma conta para outra com segurança (evita deadlock)
+int transfer(int fromID, int toID, double amount);

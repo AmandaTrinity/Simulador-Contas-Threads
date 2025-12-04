@@ -47,6 +47,17 @@ int withdraw(int accountID, double amount) {
    return success;
 }
 
+//Consulta de Saldo com exclusao mútua
+double checkBalance(int accountID) {
+   double balance = -1.0;
+   if(accountID >= 0 && accountID < NUM_ACCOUNTS) {
+      pthread_mutex_lock(&locks[accountID]);
+      balance = bankAccountBalances[accountID];
+      pthread_mutex_unlock(&locks[accountID]);
+   }
+   return balance;
+}
+
 //Destruir o mutex(cadeado) para liberar os recursos do sistema
 void cleanup() {
    int i;

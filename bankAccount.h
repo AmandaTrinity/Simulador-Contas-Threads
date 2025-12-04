@@ -47,7 +47,10 @@ int withdraw(int accountID, double amount) {
    return success;
 }
 
+//Destruir o mutex(cadeado) para liberar os recursos do sistema
 void cleanup() {
-   pthread_mutex_destroy(&lock);
+   int i;
+   for(i = 0; i < NUM_ACCOUNTS; i++) {
+      pthread_mutex_destroy(&locks[i]);
+   }
 }
-

@@ -41,6 +41,7 @@
  */
 void* threadFunction(void* arg) {
     //unsigned long threadID = (unsigned long) arg;
+    
 
     for (int i = 0; i < NUM_TRANSACTIONS; i++) {
         int op = rand() % 4;
@@ -129,7 +130,10 @@ int main(int argc, char** argv) {
     for (unsigned long i = 0; i < numThreads; i++) {
 
         // A função pthread_create retorna 0 em caso de sucesso.
-        if (pthread_create(&threads[i], NULL, threadFunction, (void*) i) != 0) { 
+        int* arg = malloc(sizeof(int));
+        *arg = i;
+
+        if (pthread_create(&threads[i], NULL, threadFunction, arg) != 0) { 
             
             perror("Erro ao criar thread");
             free(threads);

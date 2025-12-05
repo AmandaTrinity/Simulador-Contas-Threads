@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <time.h>
 
+// protótipo da função writeLog tem que estar aqui para evitar warnings de implicit declaration (Jv)
 void writeLog(const char* operation, int fromID, int toID, double amount, double finalBalance);
 
 #define NUM_ACCOUNTS 5 //numero de conta
@@ -115,7 +116,7 @@ void cleanup() {
 // (mirella) Transfere valor entre contas. Retorna 1 se sucesso, 0 se falha e -1 para parâmetros inválidos
 // Transfere valor entre contas.
 int transfer(int fromID, int toID, double amount) {
-   
+
    //1. Validação de Parâmetros
    if (amount <= 0) {
       writeLog("FALHA_TRANSFERENCIA_VALOR_INVALIDO", fromID, toID, amount, -1); // integração com log para caso de valor inválido na transferência (Jv)
@@ -211,7 +212,7 @@ void writeLog(const char* operation, int fromID, int toID, double amount, double
    time_t now = time(NULL);
    struct tm* t = localtime(&now);
 
-   fprintf(f, "[%02d:%02d:%02d] OP = %s | Origem = %d | Destino = %d | Valor = %.2f | SaldoFinal = %.2f \n", t->tm_hour, t->tm_min, t->tm_sec, operation, fromID, toID, amount, finalBalance);
+   fprintf(f, "[%02d:%02d:%02d] OP = %s | Origem = %d | Destino = %d | Valor = %.2f | SaldoFinal = %.2f \n\n", t->tm_hour, t->tm_min, t->tm_sec, operation, fromID, toID, amount, finalBalance);
 
    fclose(f);
 

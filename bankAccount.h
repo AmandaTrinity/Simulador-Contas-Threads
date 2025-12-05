@@ -32,3 +32,6 @@ void cleanup();
 
 // (mirella) Transfere um valor de uma conta para outra com segurança (evita deadlock)
 int transfer(int fromID, int toID, double amount);
+
+// (Jv) writeLog: função para escrever no arquivo de log as operações realizadas
+void writeLog(const char* operation, int fromID, int toID, double amount, double finalBalance);

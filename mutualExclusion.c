@@ -30,6 +30,7 @@
 #define OP_CHECK     2
 #define OP_TRANSFER  3
 
+
 /*
  * Função executada por cada thread.
  * Para cada iteração, a operação é escolhida aleatoriamente,
@@ -91,8 +92,10 @@ void* threadFunction(void* arg) {
 unsigned long processCommandLine(int argc, char** argv) {
     if (argc == 2) {
         return strtoul(argv[1], NULL, 10);
+    
     } else if (argc == 1) {
         return 4;
+    
     } else {
         fprintf(stderr, "Uso: %s [numThreads]\n", argv[0]);
         exit(1);
@@ -109,18 +112,25 @@ unsigned long processCommandLine(int argc, char** argv) {
  */
 int main(int argc, char** argv) {
     unsigned long numThreads = processCommandLine(argc, argv);
-
+    
+    // Revisão: malloc aloca dinamicamente memória no heap
     pthread_t* threads = malloc(numThreads * sizeof(pthread_t));
+
+    // Verifica se há memória suficiente
     if (!threads) {
         perror("Erro ao alocar memória para threads");
         exit(1);
     }
 
+    // inicializa o gerador de números aleatórios 
     srand(time(NULL));
 
     // Criação das threads
     for (unsigned long i = 0; i < numThreads; i++) {
-        if (pthread_create(&threads[i], NULL, threadFunction, (void*) i) != 0) {
+
+        // A função pthread_create retorna 0 em caso de sucesso.
+        if (pthread_create(&threads[i], NULL, threadFunction, (void*) i) != 0) { 
+            
             perror("Erro ao criar thread");
             free(threads);
             exit(1);
@@ -129,6 +139,7 @@ int main(int argc, char** argv) {
 
     // Espera por todas as threads
     for (unsigned long i = 0; i < numThreads; i++) {
+        // Revisão: Pthread_join faz com que uma thread espera (bloqueie) até que outra thread específica termine sua execução
         pthread_join(threads[i], NULL);
     }
 
@@ -137,12 +148,15 @@ int main(int argc, char** argv) {
      * A consulta via checkBalance utiliza mutex,
      * garantindo leitura consistente mesmo após múltiplas operações concorrentes.
      */
+    
     printf("\nSaldos finais das contas:\n");
     for (int i = 0; i < NUM_ACCOUNTS; i++) {
         printf("Conta %d: %.2f\n", i, checkBalance(i));
     }
 
+    // libera a memória alocada, e seus recursos, e encerra os mutexes
     free(threads);
     cleanup();
+    
     return 0;
 }

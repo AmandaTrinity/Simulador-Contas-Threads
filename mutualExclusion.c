@@ -40,7 +40,7 @@
  * bankAccount.c, que já implementam o acesso seguro aos recursos compartilhados.
  */
 void* threadFunction(void* arg) {
-    unsigned long threadID = (unsigned long) arg;
+    //unsigned long threadID = (unsigned long) arg;
 
     for (int i = 0; i < NUM_TRANSACTIONS; i++) {
         int op = rand() % 4;

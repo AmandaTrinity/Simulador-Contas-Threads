@@ -18,7 +18,7 @@ extern double bankAccountBalances[NUM_ACCOUNTS];
 
 //Protótipos de Funções
 //adiciona um valor ao saldo de uma conta específica
-void deposit(int accountID, double amount);
+int deposit(int accountID, double amount);
 
 //Subtrai um valor do saldo de uma conta específica
 //Retorna 1 em sucesso, 0 em falha (saldo insuficiente), -1 para conta inválida

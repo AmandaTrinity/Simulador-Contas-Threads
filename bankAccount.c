@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <time.h>
 
+void writeLog(const char* operation, int fromID, int toID, double amount, double finalBalance);
+
 #define NUM_ACCOUNTS 5 //numero de conta
 
 // Shared Variables --> array de mutexes, é um para cada conta
@@ -196,6 +198,7 @@ int transfer(int fromID, int toID, double amount) {
    *Obs2.: a variável operation é definida como ponteiro, pois strings é representada como array de caracteres em C, e como eu só quero ler a operação e não modificar o texo, uso o 'const char*' evitando cópias desnecessárias.
 */
 void writeLog(const char* operation, int fromID, int toID, double amount, double finalBalance){
+
    pthread_mutex_lock(&logLock); // protege a escrita no arquivo de log
 
    FILE* f = fopen("bankAccount_log.txt", "a");
@@ -208,7 +211,7 @@ void writeLog(const char* operation, int fromID, int toID, double amount, double
    time_t now = time(NULL);
    struct tm* t = localtime(&now);
 
-   fprintf(f, "[%02d:%02d:%02d] OP = %s | Origem = %d | Destino = %d | Valor = %.2f | SaldoFinal = %.2f\n", t->tm_hour, t->tm_min, t->tm_sec, operation, fromID, toID, amount, finalBalance);
+   fprintf(f, "[%02d:%02d:%02d] OP = %s | Origem = %d | Destino = %d | Valor = %.2f | SaldoFinal = %.2f \n", t->tm_hour, t->tm_min, t->tm_sec, operation, fromID, toID, amount, finalBalance);
 
    fclose(f);
 
